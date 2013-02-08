@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
+    <ProductVersion>10.0.0</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{A04A0908-E383-4ED9-9DBA-FB1B63041CB4}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <RootNamespace>YourOtherMind</RootNamespace>
+    <AssemblyName>Addin_YourothermindMarkup</AssemblyName>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
+    <DebugSymbols>True</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>False</Optimize>
+    <OutputPath>bin\Debug</OutputPath>
+    <DefineConstants>DEBUG;</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <PlatformTarget>x86</PlatformTarget>
+    <ConsolePause>False</ConsolePause>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
+    <DebugType>none</DebugType>
+    <Optimize>True</Optimize>
+    <OutputPath>bin\Release</OutputPath>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <PlatformTarget>x86</PlatformTarget>
+    <ConsolePause>False</ConsolePause>
+  </PropertyGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <ItemGroup>
+    <ProjectReference Include="..\..\yom2013B\Layout\Layout.csproj">
+      <Project>{DA1AA77A-D94D-4F79-AC96-7BC9AF0AFB34}</Project>
+      <Name>Layout</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\yom2013B\MEF_Interfaces\MEF_Interfaces.csproj">
+      <Project>{2E366A51-224A-4C3B-90D6-FE8C81C9EB78}</Project>
+      <Name>MEF_Interfaces</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\yom2013B\coreutilities\coreutilities2013.csproj">
+      <Project>{6EAA0B60-70E3-49FB-88E9-272D2719CECF}</Project>
+      <Name>coreutilities2013</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="mef_Addin_YourothermindMarkup.cs" />
+    <Compile Include="iMarkupYourOtherMind.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System.ComponentModel.Composition" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System" />
+  </ItemGroup>
+</Project>
