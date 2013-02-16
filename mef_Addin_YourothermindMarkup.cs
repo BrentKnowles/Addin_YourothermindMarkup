@@ -1,3 +1,6 @@
+
+// Purpose: Adds the YourOtherMindMarkup + FindInNote + FactInNote
+
 namespace MefAddIns
 {
 	using MefAddIns.Extensibility;
@@ -43,10 +46,7 @@ namespace MefAddIns
 			get { return @"YOMMarkup"; }
 		}
 		
-		public void ActionWithParam (object param)
-		{
-			// not used for this addin
-		}
+
 		public override bool DeregisterType ()
 		{
 
@@ -91,12 +91,28 @@ namespace MefAddIns
 		}
 		public void RespondToCallToAction<T>(T form) where T: System.Windows.Forms.Form, MEF_Interfaces.iAccess 
 		{
-
+			NewMessage.Show ("Fact or Search! This would only appear if a menu item was hooked up");
 			// do nothing. This is not called for mef_Inotes
 			return;
 		}
+		public override string BuildFileName ()
+		{
+			return  System.IO.Path.Combine (System.IO.Path.GetTempPath (), Guid.NewGuid().ToString () + ".txt");
+		}
+
+
 		
-		
+		public void ActionWithParam (object param)
+		{
+
+			int CountNotes = 0;
+			if (LayoutDetails.Instance.CurrentLayout != null) {
+				CountNotes = LayoutDetails.Instance.CurrentLayout.CountNotes();
+			}
+
+			// will be used by this one
+			NewMessage.Show(String.Format ("Facts or Search: Note Count {0}, Filename {1}  ", CountNotes, param.ToString()));
+		}
 		public override string dependencymainapplicationversion { get { return "1.0.0.0"; }}
 		
 		//override string GUID{ get { return  "notedataxml_picture"; };
@@ -105,12 +121,12 @@ namespace MefAddIns
 			{
 				PlugInAction action = new PlugInAction();
 				//	action.HotkeyNumber = -1;
-				action.MyMenuName = "";//Loc.Instance.GetString ("Screen Capture");
+				action.MyMenuName = "Parse Facts/Search";//Loc.Instance.GetString ("Screen Capture");
 				action.ParentMenuName = "";//"NotesMenu";
 				action.IsOnContextStrip = false;
 				action.IsANote = false;
 				action.IsOnAMenu = false;
-				action.IsNoteAction = false;
+				action.IsNoteAction = true;
 				action.QuickLinkShows = false;
 				action.ToolTip ="";//Loc.Instance.GetString("Allows images to be added to Layouts, as well as a Screen Capture tool.");
 				//action.Image = FileUtils.GetImage_ForDLL("camera_add.png");
