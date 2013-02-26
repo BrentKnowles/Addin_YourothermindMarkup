@@ -49,6 +49,7 @@
     <Compile Include="mef_Addin_YourothermindMarkup.cs" />
     <Compile Include="iMarkupYourOtherMind.cs" />
     <Compile Include="YomParse.cs" />
+    <Compile Include="FactListMaker.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System.ComponentModel.Composition" />
