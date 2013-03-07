@@ -110,21 +110,8 @@ namespace MefAddIns
 		/// <returns></returns>
 		public ArrayList GetListOfPages(string sLine, ref bool bGetWords)
 		{
-			ArrayList ListOfParsePages = new ArrayList();
-			string[] items = sLine.Split(',');
-			if (items != null)
-			{
-				string sStoryboardName = items[1];
-				string sGroupMatch = items[2];
-				if (sLine.IndexOf(",words") > -1)
-				{
-					bGetWords = true;
-				}
-				ListOfParsePages.AddRange(LayoutDetails.Instance.CurrentLayout.GetListOfGroupEmNameMatching(sStoryboardName, sGroupMatch));
-				
-				//NewMessage.Show(sStoryboardName + " " + sGroupMatch);
-			}
-			return ListOfParsePages;
+			return LayoutDetails.Instance.GetCurrentMarkup().GetListOfPages(sLine, ref bGetWords);
+	
 		}
 
 		/// <summary>

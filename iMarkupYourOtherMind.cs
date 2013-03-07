@@ -12,6 +12,7 @@ using Layout;
 using CoreUtilities;
 using System.Windows.Forms;
 using System.Drawing;
+using System.Collections;
 namespace YourOtherMind
 {
 	public class iMarkupYourOtherMind : iMarkupLanguage
@@ -34,7 +35,14 @@ namespace YourOtherMind
 			}
 		}
 
-
+		public bool IsIndex (string incoming)
+		{
+			bool result = false;
+			if (  "[[index]]" == incoming) {
+				result = true;
+			}
+			return result;
+		}
 
 		public void DoPaint (PaintEventArgs e, int Start, int End, RichTextBox RichText)
 		{
@@ -142,6 +150,26 @@ namespace YourOtherMind
 			} catch (Exception ex) {
 				NewMessage.Show (String.Format ("Failed in WRITER part Start {0} End {1}", Start, End) + ex.ToString ());
 			}
+		}
+
+		public ArrayList GetListOfPages(string sLine, ref bool bGetWords)
+		{
+
+			ArrayList ListOfParsePages = new ArrayList();
+			string[] items = sLine.Split(',');
+			if (items != null)
+			{
+				string sStoryboardName = items[1];
+				string sGroupMatch = items[2];
+				if (sLine.IndexOf(",words") > -1)
+				{
+					bGetWords = true;
+				}
+				ListOfParsePages.AddRange(LayoutDetails.Instance.CurrentLayout.GetListOfGroupEmNameMatching(sStoryboardName, sGroupMatch));
+				
+				//NewMessage.Show(sStoryboardName + " " + sGroupMatch);
+			}
+			return ListOfParsePages;
 		}
 
 	}
