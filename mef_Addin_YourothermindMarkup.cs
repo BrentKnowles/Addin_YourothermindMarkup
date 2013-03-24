@@ -252,7 +252,7 @@ namespace MefAddIns
 			// test if destination storyboard exists
 
 			NoteDataXML_GroupEm Storyboard = (NoteDataXML_GroupEm)LayoutDetails.Instance.CurrentLayout.FindNoteByName(DestinationStoryBoard);
-
+			Storyboard = (NoteDataXML_GroupEm)LayoutDetails.Instance.CurrentLayout.GoToNote(Storyboard);
 			//DrawingTest.NotePanel storypanel = ((mdi)_CORE_GetActiveChild()).page_Visual.GetPanelByName(DestinationStoryBoard);
 			if (Storyboard != null)
 			{
