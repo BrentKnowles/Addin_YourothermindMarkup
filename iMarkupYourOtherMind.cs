@@ -63,6 +63,30 @@ namespace YourOtherMind
 			}
 		}
 
+		public string CleanWordRequest(string incoming)
+		{
+			string sLine = incoming.Replace ("[[words]]", "").Trim ();
+			return sLine;
+		}
+		public bool IsWordRequest (string incoming)
+		{
+			bool result = false;
+			if (incoming.IndexOf ("[[words]]") > -1) {
+				result = true;
+			}
+			return result;
+		}
+
+
+		public bool IsGroupRequest (string incoming)
+		{
+			bool result = false;
+			if (incoming.IndexOf ("[[Group") > -1) {
+				result = true;
+			}
+			return result;
+		}
+
 		public bool IsIndex (string incoming)
 		{
 			bool result = false;
