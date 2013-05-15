@@ -40,9 +40,17 @@ namespace CoreUtilities
 	{
 		// constants
 		const int KEYWORDS = 3;
+
+		// links formed by linkstart url linkmiddle flavor text linkend
+		static public string linkstart="|";
+		static public string linkmiddle="|";
+		static public string linkend="|";
+
 		// types
 		enum KeywordTypes  { SCENE, CENTER_TEXT, LEFT_TEXT };
 		// Variables
+
+
 		static public string prefix = "[[";
 		static public string postfix = "]]";
 		static public int[] system_id = new int[KEYWORDS] { (int)KeywordTypes.SCENE, 

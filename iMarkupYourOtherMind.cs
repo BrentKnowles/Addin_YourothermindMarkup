@@ -96,9 +96,160 @@ namespace YourOtherMind
 			return result;
 		}
 
+		void PaintLink (PaintEventArgs e, int Start, int End, RichTextBox RichText)
+		{
+			Graphics g;
+			
+			g = RichText.CreateGraphics ();
+			//Pen myPen = null;// new Pen (Color.FromArgb (60, Color.Yellow)); // Alpha did not seem to work this way
+			
+			
+			// this gets tricky. The loop is just to find all the [[~scenes]] on the note
+			// even if offscreen.
+			// OK: but with th eoptimization to only show on screen stuff, do we need this anymore???
+			// august 10 - settting it back
+			
+			
+			// now trying regex
+			System.Text.RegularExpressions.Regex regex = new System.Text.RegularExpressions.Regex ("\\w\\|\\w",
+			                                                                                       System.Text.RegularExpressions.RegexOptions.IgnoreCase |
+			                                                                                       System.Text.RegularExpressions.RegexOptions.Multiline);
+			System.Text.RegularExpressions.MatchCollection matches = regex.Matches (RichText.Text, Start);
+			
+			foreach (System.Text.RegularExpressions.Match match in matches) {
+				if (match.Index > End)
+					break; // we exit if already at end
+				
+				Point pos = RichText.GetPositionFromCharIndex (match.Index);
+				
+				if (pos.X > -1 && pos.Y > -1) {
+			
+					
+					int testpos = match.Index + 2;
+					
+
+
+						
+					Color colorToUse = Color.FromArgb(200, Color.Pink);
+						
+						// default is [[facts]] and stuff
+						pos = CoreUtilities.General.BuildLocationForOverlayText (pos, DockStyle.Bottom, "|");
+						System.Drawing.SolidBrush brush1 = new System.Drawing.SolidBrush( colorToUse);
+						//myPen.Width = 1;
+						//myPen.Color = Color.Red;
+						int scaler = Math.Max (10, (int)(Math.Round (RichText.ZoomFactor / 2) * 10));
+
+
+
+						Rectangle rec = new Rectangle (new Point (pos.X, pos.Y - 25), new Size ((int)(scaler * 1.5), (int)(scaler * 0.75)));
+					    Rectangle rec2 = new Rectangle (new Point (pos.X+20, pos.Y - 25), new Size ((int)(scaler * 1), (int)(scaler * 0.65)));
+						//g.DrawLine(myPen, pos.X, pos.Y -10, pos.X + 50, pos.Y-10);
+						//g.FillRectangle (brush1, rec);
+						g.FillEllipse(brush1, rec);
+					g.FillEllipse(brush1, rec2);
+						
+						
+					}
+					
+					
+					/*
+                            locationInText = locationInText + sParam.Length;
+
+                            if (locationInText > end)
+                            {
+                                // don't search past visible end
+                                pos = emptyPoint;
+                            }
+                            else
+                                pos = GetPositionForFoundText(sParam, ref locationInText);*/
+				}
+			 // regex matches
+			g.Dispose ();
+			//myPen.Dispose ();
+		}
+
+		int BuildScaler (float zoomFactor)
+		{
+			return Math.Max (10, (int)(Math.Round (zoomFactor / 2) * 10));
+		}
+
+		void PaintDoubleSpaces (PaintEventArgs e, int Start, int End, RichTextBox RichText)
+		{
+			Graphics g;
+			
+			g = RichText.CreateGraphics ();
+			//Pen myPen = null;// new Pen (Color.FromArgb (60, Color.Yellow)); // Alpha did not seem to work this way
+			
+			
+			// this gets tricky. The loop is just to find all the [[~scenes]] on the note
+			// even if offscreen.
+			// OK: but with th eoptimization to only show on screen stuff, do we need this anymore???
+			// august 10 - settting it back
+			
+			
+			// now trying regex
+			System.Text.RegularExpressions.Regex regex = new System.Text.RegularExpressions.Regex ("\\w  \\w",
+			                                                                                       System.Text.RegularExpressions.RegexOptions.IgnoreCase |
+			                                                                                       System.Text.RegularExpressions.RegexOptions.Multiline);
+			System.Text.RegularExpressions.MatchCollection matches = regex.Matches (RichText.Text, Start);
+			
+			foreach (System.Text.RegularExpressions.Match match in matches) {
+				if (match.Index > End)
+					break; // we exit if already at end
+				
+				Point pos = RichText.GetPositionFromCharIndex (match.Index);
+				
+				if (pos.X > -1 && pos.Y > -1) {
+					
+					
+					int testpos = match.Index + 2;
+					
+					
+					
+					
+					Color colorToUse = Color.FromArgb(175, Color.Red);
+					
+					// default is [[facts]] and stuff
+					pos = CoreUtilities.General.BuildLocationForOverlayText (pos, DockStyle.Bottom, "  ");
+					System.Drawing.SolidBrush brush1 = new System.Drawing.SolidBrush( colorToUse);
+					//myPen.Width = 1;
+					//myPen.Color = Color.Red;
+					int scaler = BuildScaler(RichText.ZoomFactor);
+					
+
+					
+					Rectangle rec = new Rectangle (new Point (pos.X+scaler, pos.Y-15), new Size ((int)(scaler * 1.5), (int)(scaler * 0.75)));
+				//	Rectangle rec2 = new Rectangle (new Point (pos.X+20, pos.Y - 25), new Size ((int)(scaler * 1), (int)(scaler * 0.65)));
+					//g.DrawLine(myPen, pos.X, pos.Y -10, pos.X + 50, pos.Y-10);
+					//g.FillRectangle (brush1, rec);
+					g.FillEllipse(brush1, rec);
+				//	g.FillEllipse(brush1, rec2);
+					
+					
+				}
+				
+				
+				/*
+                            locationInText = locationInText + sParam.Length;
+
+                            if (locationInText > end)
+                            {
+                                // don't search past visible end
+                                pos = emptyPoint;
+                            }
+                            else
+                                pos = GetPositionForFoundText(sParam, ref locationInText);*/
+			}
+			// regex matches
+			g.Dispose ();
+			//myPen.Dispose ();
+		}
 		public void DoPaint (PaintEventArgs e, int Start, int End, RichTextBox RichText)
 		{
 			try {
+				PaintDoubleSpaces(e, Start, End, RichText);
+				PaintLink(e, Start, End, RichText);
+
 				//  int locationInText = GetCharIndexFromPosition(new Point(0, 0));
 				string sParam = "[[~scene]]";
 				
@@ -122,7 +273,7 @@ namespace YourOtherMind
 				Pen myPen = new Pen (Color.FromArgb (60, Color.Yellow)); // Alpha did not seem to work this way
 				
 				
-				// this gets trick. The loop is just to find all the [[~scenes]] on the note
+				// this gets tricky. The loop is just to find all the [[~scenes]] on the note
 				// even if offscreen.
 				// OK: but with th eoptimization to only show on screen stuff, do we need this anymore???
 				// august 10 - settting it back
@@ -154,20 +305,21 @@ namespace YourOtherMind
 						if (RichText.Text.Length > (testpos + 1) && RichText.Text [testpos] == '~' && RichText.Text [testpos + 1] == 's') {
 							
 							if (g != null) {
-								myPen.Color = Color.Yellow;
+								//myPen.Color = Color.Yellow;
+								myPen = new Pen (Color.FromArgb (225, Color.Yellow));
 								myPen.Width = 8;
 								pos = CoreUtilities.General.BuildLocationForOverlayText (pos, DockStyle.Right, sParam);
 								g.DrawLine (myPen, pos.X, pos.Y, pos.X + 500, pos.Y);
 							}
 						} else {
-							Color colorToUse = Color.Green;
+							Color colorToUse = Color.FromArgb(100, Color.Green);
 							
 							// November 2012 - testing to see if there's a period right before which means it will count)
 							if (match.Index > 0) {
 								if ('.' == RichText.Text [match.Index - 1]) {
 									// we have a period so the code .[[f]] will not do anything
 									// show in a different color
-									colorToUse = Color.Red;
+									colorToUse = Color.FromArgb(100, Color.Red);
 								}
 							}
 							
@@ -176,8 +328,8 @@ namespace YourOtherMind
 							System.Drawing.SolidBrush brush1 = new System.Drawing.SolidBrush (colorToUse);
 							//myPen.Width = 1;
 							//myPen.Color = Color.Red;
-							int scaler = Math.Max (10, (int)(Math.Round (RichText.ZoomFactor / 2) * 10));
-							Rectangle rec = new Rectangle (new Point (pos.X, pos.Y - 25), new Size ((int)(scaler * 1.5), (int)(scaler * 0.75)));
+							int scaler = BuildScaler(RichText.ZoomFactor);
+							Rectangle rec = new Rectangle (new Point (pos.X+(int)(scaler*1.5), pos.Y -(5+scaler)), new Size ((int)(scaler * 1.5), (int)(scaler * 1.5)));
 							//g.DrawLine(myPen, pos.X, pos.Y -10, pos.X + 50, pos.Y-10);
 							g.FillRectangle (brush1, rec);
 							
