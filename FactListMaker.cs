@@ -54,6 +54,10 @@ namespace MefAddIns
 		
 		public static Hashtable GetSearchItems(string sourceText, Hashtable Facts, string ExtraInfoToEncode, string SearchTerm)
 		{
+			// ignore case (May 2013) when doing search parses.
+			sourceText = sourceText.ToLower();
+			SearchTerm=SearchTerm.ToLower();
+
 			if (sourceText.IndexOf(SearchTerm) > -1)
 			{
 				string group = "Found";

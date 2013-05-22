@@ -41,6 +41,7 @@ using CoreUtilities;
 using System.Windows.Forms;
 using System.Drawing;
 using System.Collections;
+using System.Text.RegularExpressions;
 namespace YourOtherMind
 {
 	public class iMarkupYourOtherMind : iMarkupLanguage
@@ -189,8 +190,8 @@ namespace YourOtherMind
 			
 			// now trying regex
 			System.Text.RegularExpressions.Regex regex = new System.Text.RegularExpressions.Regex ("\\w  \\w",
-			                                                                                       System.Text.RegularExpressions.RegexOptions.IgnoreCase |
-			                                                                                       System.Text.RegularExpressions.RegexOptions.Multiline);
+               System.Text.RegularExpressions.RegexOptions.IgnoreCase | RegexOptions.Compiled|
+               System.Text.RegularExpressions.RegexOptions.Multiline);
 			System.Text.RegularExpressions.MatchCollection matches = regex.Matches (RichText.Text, Start);
 			
 			foreach (System.Text.RegularExpressions.Match match in matches) {
@@ -210,12 +211,12 @@ namespace YourOtherMind
 					Color colorToUse = Color.FromArgb(175, Color.Red);
 					
 					// default is [[facts]] and stuff
-					pos = CoreUtilities.General.BuildLocationForOverlayText (pos, DockStyle.Bottom, "  ");
+				//	pos = CoreUtilities.General.BuildLocationForOverlayText (pos, DockStyle.Bottom, "  ");
 				//	System.Drawing.SolidBrush brush1 = new System.Drawing.SolidBrush( colorToUse);
 					System.Drawing.Pen pen1 = new Pen(colorToUse);
 					//myPen.Width = 1;
 					//myPen.Color = Color.Red;
-					int scaler = BuildScaler(RichText.ZoomFactor);
+			//		int scaler = BuildScaler(RichText.ZoomFactor);
 					
 					Rectangle rec = GetRectangleForSmallRectangle(g, pos, RichText, match.Index, match.Value, true);// new Rectangle (new Point (pos.X+(int)(scaler*1.5), pos.Y -(5+scaler)), new Size ((int)(scaler * 1.5), (int)(scaler * 1.5)));
 
@@ -226,6 +227,7 @@ namespace YourOtherMind
 					//g.FillRectangle (brush1, rec);
 					//g.FillEllipse(brush1, rec);
 					rec.Height = 1;
+			
 					g.DrawRectangle(pen1, rec);
 				//	g.FillEllipse(brush1, rec2);
 					
@@ -248,12 +250,72 @@ namespace YourOtherMind
 			g.Dispose ();
 			//myPen.Dispose ();
 		}
+
+		void PaintHeadings (PaintEventArgs e, int Start, int End, RichTextBox RichText, System.Text.RegularExpressions.Regex regex2, Color color, string text, Font f)
+		{
+			//string exp = ".*\\=([^)]+?)\\=";
+		
+			// this one was fast but inaccurate (very)
+			//string exp = String.Format (".*?\\=\\w([^)]+?)\\w\\={0}?", Environment.NewLine); // added lazy operations to attempt a speed improvement
+				Graphics g = e.Graphics;//RichText.CreateGraphics ();
+		
+			System.Drawing.Pen pen1 = new Pen(color);
+
+			System.Text.RegularExpressions.MatchCollection matches = regex2.Matches (RichText.Text, Start);
+			
+			foreach (System.Text.RegularExpressions.Match match in matches) {
+				if (match.Index > End)
+					break; // we exit if already at end
+
+				Point pos = RichText.GetPositionFromCharIndex (match.Index);
+				
+				if (pos.X > -1 && pos.Y > -1) {
+				
+					pen1.Width = 8;
+					string stext = text+match.Value+text;
+					//pos = CoreUtilities.General.BuildLocationForOverlayText (pos, DockStyle.Right,match.Value );
+					int newWidth = Convert.ToInt32 (g.MeasureString (stext, f).Width * RichText.ZoomFactor);
+					pos =  new Point(pos.X + (newWidth), pos.Y + 10);
+					g.DrawLine (pen1, pos.X, pos.Y, pos.X + 500, pos.Y);
+
+//					Rectangle rec = GetRectangleForSmallRectangle(g, pos, RichText, match.Index, match.Value, true);// new Rectangle (new Point (pos.X+(int)(scaler*1.5), pos.Y -(5+scaler)), new Size ((int)(scaler * 1.5), (int)(scaler * 1.5)));
+//				rec.Height = 2;
+//				
+//				g.DrawRectangle(pen1, rec);
+				}
+			}
+		//	g.Dispose (); don't dispose what we are borrowing
+		}
+		System.Text.RegularExpressions.Regex Mainheading = new System.Text.RegularExpressions.Regex ("^=[^=]+=$",
+                 RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.Compiled| System.Text.RegularExpressions.RegexOptions.Multiline );
+		System.Text.RegularExpressions.Regex Mainheading2 = new System.Text.RegularExpressions.Regex ("^==[^=]+==$",
+		                                                                                             RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.Compiled| System.Text.RegularExpressions.RegexOptions.Multiline );
+		System.Text.RegularExpressions.Regex Mainheading3 = new System.Text.RegularExpressions.Regex ("^===[^=]+===$",
+		                                                                                              RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.Compiled| System.Text.RegularExpressions.RegexOptions.Multiline );
+
+
 		public void DoPaint (PaintEventArgs e, int Start, int End, RichTextBox RichText)
 		{
 			try {
 				PaintDoubleSpaces(e, Start, End, RichText);
 				PaintLink(e, Start, End, RichText);
 
+				bool doheadings = true;
+				if (doheadings)
+				{
+					Font f = new Font(RichText.Font.FontFamily, RichText.Font.Size, RichText.Font.Style, GraphicsUnit.Pixel, Convert.ToByte(0), false);
+					Color newColor = TextUtils.InvertColor(RichText.BackColor);
+
+
+					Color colorToUse = Color.FromArgb(175, ControlPaint.Dark(newColor));
+					PaintHeadings(e, Start, End, RichText, Mainheading, colorToUse,"=",f);
+
+					colorToUse = Color.FromArgb(175,ControlPaint.Light(newColor));
+					PaintHeadings(e, Start, End, RichText, Mainheading2, colorToUse,"==",f);
+
+					colorToUse = Color.FromArgb(175, ControlPaint.LightLight(newColor));
+					PaintHeadings(e, Start, End, RichText, Mainheading3, colorToUse,"===",f);
+				}
 				//  int locationInText = GetCharIndexFromPosition(new Point(0, 0));
 				string sParam = "[[~scene]]";
 				
@@ -285,7 +347,14 @@ namespace YourOtherMind
 				
 				
 				// now trying regex
-				System.Text.RegularExpressions.Regex regex = new System.Text.RegularExpressions.Regex ("\\[(.*?)\\]",
+				// This worked for = match but it was WAAY too slow
+//				System.Text.RegularExpressions.Regex regex = new System.Text.RegularExpressions.Regex (".*\\=([^)]+)\\=",
+//				                                                                   System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+			
+
+				// this works just experimenting
+				System.Text.RegularExpressions.Regex regex = new System.Text.RegularExpressions.Regex ("\\[\\[(.*?)\\]\\]",
 				                                                                                      System.Text.RegularExpressions.RegexOptions.IgnoreCase |
 					System.Text.RegularExpressions.RegexOptions.Multiline);
 				System.Text.RegularExpressions.MatchCollection matches = regex.Matches (RichText.Text, Start);
@@ -329,7 +398,7 @@ namespace YourOtherMind
 							}
 							
 							// default is [[facts]] and stuff
-							pos = CoreUtilities.General.BuildLocationForOverlayText (pos, DockStyle.Bottom, sParam);
+							//pos = CoreUtilities.General.BuildLocationForOverlayText (pos, DockStyle.Bottom, sParam);
 						//	if (e.Graphics. .Contains(pos))
 							{
 							//System.Drawing.SolidBrush brush1 = new System.Drawing.SolidBrush (colorToUse);
@@ -339,7 +408,7 @@ namespace YourOtherMind
 
 
 							//int scaler = BuildScaler(RichText.ZoomFactor);
-							Rectangle rec = GetRectangleForSmallRectangle(g, pos, RichText, match.Index, match.Value, true);// new Rectangle (new Point (pos.X+(int)(scaler*1.5), pos.Y -(5+scaler)), new Size ((int)(scaler * 1.5), (int)(scaler * 1.5)));
+							Rectangle rec = GetRectangleForSmallRectangle(g, pos, RichText, match.Index, match.Value, false);// new Rectangle (new Point (pos.X+(int)(scaler*1.5), pos.Y -(5+scaler)), new Size ((int)(scaler * 1.5), (int)(scaler * 1.5)));
 							//g.DrawLine(myPen, pos.X, pos.Y -10, pos.X + 50, pos.Y-10);
 //							SolidBrush brushEmpty = new SolidBrush(RichText.BackColor);
 //							g.FillRectangle (brushEmpty, rec);
@@ -375,30 +444,41 @@ namespace YourOtherMind
 			Point newPoint = new Point ( (int)(passedPos.X + box.ZoomFactor), (int)(passedPos.Y - box.ZoomFactor));
 			return newPoint;
 		}
-
+//		Rectangle GetRectangleForSmallRectangle (Graphics g, Point passedPos, RichTextBox box, int textposition, string text, bool drawFromBottom)
+//		{
+//			return GetRectangleForSmallRectangle(g, passedPos, box, textposition, text, drawFromBottom,Constants.BLANK);
+//		}
 		// returns a rectangle suitable for a small rectangle covering the beginning of the matched text
-		Rectangle GetRectangleForSmallRectangle (Graphics g, Point passedPos, RichTextBox box, int textposition, string text, bool drawFromTop)
+		Rectangle GetRectangleForSmallRectangle (Graphics g, Point passedPos, RichTextBox box, int textposition, string text, bool drawFromBottom/*, string offsetx*/)
 		{   
 		
 			int scaler = BuildScaler (box.ZoomFactor);
 			Point newPos = GetBottomLeftCornerOfMatch (passedPos, box);
-			int newX = ((int)(scaler * 1.5)) - scaler;
-			int newY = (int)(scaler * 1.5);
-			Size newSize = new Size (newX, newY);
+			//	int newX = ((int)(scaler * 1.5)) - scaler;
+			//	int newY = (int)(scaler * 1.5);
+
+			// default is ignored. We construct width and height based on size of text
+			Size newSize = new Size (100, 100);
 
 			using (Font f = new Font(box.Font.FontFamily, box.Font.Size, box.Font.Style, GraphicsUnit.Pixel, Convert.ToByte(0), false)) {
 
 				//char ch = box.Text [textposition];
 				//newSize.Width = Convert.ToInt32 (g.MeasureString (ch.ToString(), f).Width * box.ZoomFactor);
 				newSize.Width = Convert.ToInt32 (g.MeasureString (text, f).Width * box.ZoomFactor);
-				newSize.Height = Convert.ToInt32(box.Font.Height * box.ZoomFactor);
+				newSize.Height = Convert.ToInt32 (box.Font.Height * box.ZoomFactor);
 
-				// doh. We need to adjust yPosition to accomdate the way rectangles draw
-				if (true == drawFromTop)
-				{
-					newPos.Y = newPos.Y - newSize.Height;
+//				// doh. We need to adjust yPosition to accomdate the way rectangles draw
+				if (true == drawFromBottom) {
+					newPos.Y = newPos.Y + newSize.Height;
 				}
+//				if (Constants.BLANK != offsetx) {
+//					// by default we start at the first left
+//					// but for certain things like headings we actually want to sh ift over towards the right a measure
+//					newPos.X = newPos.X + (offsetx.Length * newSize.Width);
+//				}
 			}
+
+
 			return new Rectangle(newPos, newSize);
 		}
 		public ArrayList GetListOfPages(string sLine, ref bool bGetWords)

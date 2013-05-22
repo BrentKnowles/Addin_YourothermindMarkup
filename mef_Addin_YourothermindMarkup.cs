@@ -65,7 +65,7 @@ namespace MefAddIns
 		}
 		public string Version
 		{
-			get { return @"1.0.0.0"; }
+			get { return @"1.0.1.0"; }
 		}
 		public string Description
 		{
