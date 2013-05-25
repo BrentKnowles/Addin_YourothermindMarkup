@@ -131,7 +131,7 @@ namespace YourOtherMind
 
 
 						
-					Color colorToUse = Color.FromArgb(200, Color.Pink);
+					Color colorToUse = Color.FromArgb(255, ControlPaint.Dark (TextUtils.InvertColor(RichText.BackColor)));
 						
 						// default is [[facts]] and stuff
 						pos = CoreUtilities.General.BuildLocationForOverlayText (pos, DockStyle.Bottom, "|");
@@ -337,7 +337,7 @@ namespace YourOtherMind
 
 				//g = RichText.CreateGraphics ();
 				g = e.Graphics;
-				Pen myPen = new Pen (Color.FromArgb (60, Color.Yellow)); // Alpha did not seem to work this way
+				Pen myPen = new Pen (Color.FromArgb (255, ControlPaint.LightLight (TextUtils.InvertColor(RichText.BackColor)))); 
 				
 				
 				// this gets tricky. The loop is just to find all the [[~scenes]] on the note
@@ -380,20 +380,20 @@ namespace YourOtherMind
 							
 							if (g != null) {
 								//myPen.Color = Color.Yellow;
-								myPen = new Pen (Color.FromArgb (225, Color.Yellow));
+							//	myPen = new Pen (Color.FromArgb (225, Color.Yellow));
 								myPen.Width = 8;
 								pos = CoreUtilities.General.BuildLocationForOverlayText (pos, DockStyle.Right, sParam);
 								g.DrawLine (myPen, pos.X, pos.Y, pos.X + 500, pos.Y);
 							}
 						} else {
-							Color colorToUse = Color.FromArgb(100, Color.Green);
+							Color colorToUse = Color.FromArgb (255, ControlPaint.LightLight (TextUtils.InvertColor(RichText.BackColor)));//Color.FromArgb(255, Color.Green);
 							
 							// November 2012 - testing to see if there's a period right before which means it will count)
 							if (match.Index > 0) {
 								if ('.' == RichText.Text [match.Index - 1]) {
 									// we have a period so the code .[[f]] will not do anything
 									// show in a different color
-									colorToUse = Color.FromArgb(100, Color.Red);
+									colorToUse = Color.Red;// Alpha worked but because not all areas are redrawn at same time did not look right (May 2013) Color.FromArgb(255, Color.Red);
 								}
 							}
 							
