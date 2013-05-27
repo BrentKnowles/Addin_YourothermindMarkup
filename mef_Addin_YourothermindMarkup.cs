@@ -169,7 +169,7 @@ namespace MefAddIns
 						
 						// set storyboard where details will go.
 						DestinationStoryBoard = LinesOfText[0];
-						if (DestinationStoryBoard.IndexOf("fact") == -1 && DestinationStoryBoard.IndexOf("search") == -1)
+						if (DestinationStoryBoard.ToLower().IndexOf("fact") == -1 && DestinationStoryBoard.ToLower ().IndexOf("search") == -1)
 						{
 							NewMessage.Show(Loc.Instance.GetString ("Fact Storyboards must have the word fact in them. Search Storyboards must have the word search. Quitting!"));
 							return null;
