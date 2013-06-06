@@ -42,6 +42,8 @@ using System.Windows.Forms;
 using System.Drawing;
 using System.Collections;
 using System.Text.RegularExpressions;
+using System.Collections.Generic;
+
 namespace YourOtherMind
 {
 	public class iMarkupYourOtherMind : iMarkupLanguage
@@ -78,7 +80,14 @@ namespace YourOtherMind
 			return result;
 		}
 
-
+		public bool IsOver (string incoming)
+		{
+			bool result = false;
+			if (incoming.IndexOf ("[[end") > -1) {
+				result = true;
+			}
+			return result;
+		}
 		public bool IsGroupRequest (string incoming)
 		{
 			bool result = false;
@@ -500,7 +509,51 @@ namespace YourOtherMind
 			}
 			return ListOfParsePages;
 		}
-
+		/// <summary>
+		/// Builds the list. for the bookmark system
+		/// </summary>
+		/// <returns>
+		/// The list.
+		/// </returns>
+		/// <param name='RichText'>
+		/// Rich text.
+		/// </param>
+		public List<TreeItem> BuildList (NoteDataXML_RichText RichText)
+		{
+			System.Text.RegularExpressions.Regex Mainheading = new System.Text.RegularExpressions.Regex ("^=[^=]+=$",
+			                                                                                             RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.Compiled | System.Text.RegularExpressions.RegexOptions.Multiline);
+			System.Text.RegularExpressions.Regex Mainheading2 = new System.Text.RegularExpressions.Regex ("^==[^=]+==$",
+			                                                                                              RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.Compiled | System.Text.RegularExpressions.RegexOptions.Multiline);
+			System.Text.RegularExpressions.Regex Mainheading3 = new System.Text.RegularExpressions.Regex ("^===[^=]+===$",
+			                                                                                              RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.Compiled | System.Text.RegularExpressions.RegexOptions.Multiline);
+			
+			
+			//TODO: Move this into the MarkupLanguage
+			List<TreeItem> items = new List<TreeItem> ();
+			
+			System.Text.RegularExpressions.MatchCollection matches = Mainheading.Matches (RichText.GetRichTextBox().Text, 0);
+			
+			foreach (System.Text.RegularExpressions.Match match in matches) {
+				items.Add (new TreeItem(match.Value.Replace ("=",""), 0,match.Index));
+			}
+			matches = Mainheading2.Matches (RichText.GetRichTextBox().Text, 0);
+			
+			
+			
+			foreach (System.Text.RegularExpressions.Match match in matches) {
+				items.Add (new TreeItem(match.Value.Replace ("=",""), 1,match.Index));
+			}
+			matches = Mainheading3.Matches (RichText.GetRichTextBox().Text, 0);
+			foreach (System.Text.RegularExpressions.Match match in matches) {
+				items.Add (new TreeItem(match.Value.Replace ("=",""), 2,match.Index));
+			}
+			//need to somehow merge and sort by index 
+			// need to a custom fort
+			items.Sort ();
+			
+			return items;
+			
+		}
 	}
 }
 
