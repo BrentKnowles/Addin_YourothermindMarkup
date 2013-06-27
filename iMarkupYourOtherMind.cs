@@ -450,7 +450,7 @@ namespace YourOtherMind
 		// used for starting a rectangle or line from the point of a match
 		Point GetBottomLeftCornerOfMatch(Point passedPos, RichTextBox box)
 		{
-			Point newPoint = new Point ( (int)(passedPos.X + box.ZoomFactor), (int)(passedPos.Y - box.ZoomFactor));
+			Point newPoint = new Point ( (int)(passedPos.X + box.ZoomFactor), (int)(passedPos.Y - (box.ZoomFactor *.95)));
 			return newPoint;
 		}
 //		Rectangle GetRectangleForSmallRectangle (Graphics g, Point passedPos, RichTextBox box, int textposition, string text, bool drawFromBottom)
@@ -474,7 +474,9 @@ namespace YourOtherMind
 				//char ch = box.Text [textposition];
 				//newSize.Width = Convert.ToInt32 (g.MeasureString (ch.ToString(), f).Width * box.ZoomFactor);
 				newSize.Width = Convert.ToInt32 (g.MeasureString (text, f).Width * box.ZoomFactor);
-				newSize.Height = Convert.ToInt32 (box.Font.Height * box.ZoomFactor);
+
+				// June 2013 -- the box height is slightly too much, trying to reduce
+				newSize.Height = Convert.ToInt32 (box.Font.Height * (box.ZoomFactor-0.15));
 
 //				// doh. We need to adjust yPosition to accomdate the way rectangles draw
 				if (true == drawFromBottom) {
@@ -527,11 +529,24 @@ namespace YourOtherMind
 			System.Text.RegularExpressions.Regex Mainheading3 = new System.Text.RegularExpressions.Regex ("^===[^=]+===$",
 			                                                                                              RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.Compiled | System.Text.RegularExpressions.RegexOptions.Multiline);
 			
-			
+			System.Text.RegularExpressions.Regex Mainheading4 = new System.Text.RegularExpressions.Regex ("^====[^=]+====$",
+			                                                                                              RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.Compiled | System.Text.RegularExpressions.RegexOptions.Multiline);
+
+
+			System.Text.RegularExpressions.Regex regex = new System.Text.RegularExpressions.Regex ("\\[\\[~(.*?)\\]\\]",
+			                                                                                       System.Text.RegularExpressions.RegexOptions.IgnoreCase |
+			                                                                                       System.Text.RegularExpressions.RegexOptions.Multiline);
+
 			//TODO: Move this into the MarkupLanguage
 			List<TreeItem> items = new List<TreeItem> ();
-			
-			System.Text.RegularExpressions.MatchCollection matches = Mainheading.Matches (RichText.GetRichTextBox().Text, 0);
+
+
+			System.Text.RegularExpressions.MatchCollection matches = regex.Matches (RichText.GetRichTextBox().Text, 0);
+			foreach (System.Text.RegularExpressions.Match match in matches) {
+				items.Add (new TreeItem(match.Value, 0,match.Index));
+			}
+
+			 matches = Mainheading.Matches (RichText.GetRichTextBox().Text, 0);
 			
 			foreach (System.Text.RegularExpressions.Match match in matches) {
 				items.Add (new TreeItem(match.Value.Replace ("=",""), 0,match.Index));
@@ -547,6 +562,14 @@ namespace YourOtherMind
 			foreach (System.Text.RegularExpressions.Match match in matches) {
 				items.Add (new TreeItem(match.Value.Replace ("=",""), 2,match.Index));
 			}
+
+			matches = Mainheading4.Matches (RichText.GetRichTextBox().Text, 0);
+			foreach (System.Text.RegularExpressions.Match match in matches) {
+				items.Add (new TreeItem(match.Value.Replace ("=",""), 3,match.Index));
+			}
+
+		
+
 			//need to somehow merge and sort by index 
 			// need to a custom fort
 			items.Sort ();

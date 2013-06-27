@@ -65,7 +65,8 @@ namespace MefAddIns
 		}
 		public string Version
 		{
-			get { return @"1.0.1.0"; }
+			// 1.0.2 - able to "search" within SubPanels, not just Groups on Storyboards
+			get { return @"1.0.2.0"; }
 		}
 		public string Description
 		{
@@ -142,6 +143,20 @@ namespace MefAddIns
 	
 		}
 
+		static void HandleFaceForNote (NoteDataInterface note, ref Hashtable TheFacts, bool SearchMode, string SearchTerm)
+		{
+			RichTextBox tempBox = new RichTextBox ();
+			tempBox.Rtf = note.Data1;
+			if (SearchMode == true) {
+				FactListMaker.GetSearchItems (tempBox.Text, TheFacts, note.GuidForNote + FactListMaker.SEP_INSIDEPHRASE + note.Caption, SearchTerm);
+			}
+			else {
+				FactListMaker.GetFacts (tempBox.Text, TheFacts, note.GuidForNote + FactListMaker.SEP_INSIDEPHRASE + note.Caption);
+			}
+			tempBox.Dispose();
+			//return TheFacts;
+		}
+
 		/// <summary>
 		/// goes through an index-type note, sort of like the index for sendaway
 		/// [[name of storyboard to send stuff to]]  -- will test if it exists
@@ -209,13 +224,15 @@ namespace MefAddIns
 								if (sLine.IndexOf("[[Group") > -1)
 							{
 								bool words = false; // not needed for this but required for function
-								ListOfParsePages = GetListOfPages(sLine, ref words);
+								ArrayList tmp  = GetListOfPages(sLine, ref words);
+								ListOfParsePages.AddRange(tmp);
 								ListOfParsePages.Sort();
 								
 								
 							}
 							else
 							{
+								//NewMessage.Show ("Adding " + sLine);
 								// if there's just a page name then we add it to the list of pages
 								ListOfParsePages.Add(sLine);
 							}
@@ -227,31 +244,51 @@ namespace MefAddIns
 				}
 				
 				Hashtable TheFacts = new Hashtable();
-				
+
+
+
+
+
 				// THIS REQUIRES parsing each FILE
 				// getting hashtable full of facts
 				foreach (string notetoopen in ListOfParsePages)
 				{
 					// now do the actual parse on each of these pages 
 					// opening them and inspecting them
+					//NewMessage.Show ("Looking for " + notetoopen);
 					NoteDataInterface note = LayoutDetails.Instance.CurrentLayout.FindNoteByName(notetoopen);
+					//LayoutDetails.Instance.CurrentLayout.FindNoteByName(notetoopen);	
 					//DrawingTest.NotePanel panel = ((mdi)_CORE_GetActiveChild()).page_Visual.GetPanelByName(notetoopen);
-					if (note != null)
+					if (note != null)		
 					{
-						// need to use RichText box because we want plaintext version of text
-						RichTextBox tempBox = new RichTextBox();
-						
-						tempBox.Rtf = note.Data1;
-						if (SearchMode == true)
+
+					//	NewMessage.Show ("Examining " + note.Caption);
+						// june 2013 - moving code from LayoutDetails into here to search subpanels
+						// if a panel is specified then we open each note on that panel?
+						if (note.ListOfSubnotes() != null)
 						{
-							FactListMaker.GetSearchItems(tempBox.Text, TheFacts, 
-							                             note.GuidForNote + FactListMaker.SEP_INSIDEPHRASE + note.Caption, SearchTerm);
+							// may 27 2013 - also need to sort subpages coming from a panel
+							
+							List<string> subpages = note.ListOfSubnotes();
+							subpages.Sort ();
+							foreach (string s in subpages)
+							{
+								NoteDataInterface subnote = LayoutDetails.Instance.CurrentLayout.FindNoteByName(s);	
+								//	subnote = LayoutDetails.Instance.CurrentLayout.GoToNote(subnote);
+								if (null != subnote)
+								{
+								//	NewMessage.Show ("searching " +subnote.Caption + " for " + SearchTerm);
+									HandleFaceForNote (subnote, ref TheFacts, SearchMode, SearchTerm);
+								}
+							}
 						}
 						else
 						{
-							FactListMaker.GetFacts(tempBox.Text, TheFacts,  note.GuidForNote + FactListMaker.SEP_INSIDEPHRASE + note.Caption);
+						// need to use RichText box because we want plaintext version of text
+							//RichTextBox tempBox;
+							HandleFaceForNote (note, ref TheFacts, SearchMode, SearchTerm);
 						}
-						tempBox.Dispose();
+						//tempBox.Dispose();
 					}
 				}
 				
