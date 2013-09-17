@@ -65,8 +65,9 @@ namespace MefAddIns
 		}
 		public string Version
 		{
+			// 1.0.3 - holding a reference list when doing Fact List to speed it up
 			// 1.0.2 - able to "search" within SubPanels, not just Groups on Storyboards
-			get { return @"1.0.2.0"; }
+			get { return @"1.0.3.0"; }
 		}
 		public string Description
 		{
@@ -166,6 +167,7 @@ namespace MefAddIns
 		/// <returns></returns>
 		private Hashtable CreateFactList(ref string DestinationStoryBoard, ref bool groupByGroup)
 		{
+
 			ArrayList ListOfParsePages = new ArrayList();
 			if (LayoutDetails.Instance.CurrentLayout != null && LayoutDetails.Instance.CurrentLayout.CurrentTextNote != null)
 			{
@@ -246,9 +248,15 @@ namespace MefAddIns
 				Hashtable TheFacts = new Hashtable();
 
 
+				// SEPTEMBER 2013 For future reference, you cannot simply skip searching subnotes
+				// when doing a fact parse or something because it won't then find the child note
+				// That is, in LayoutPanel I could parse in something to only search child notes, but then 
+				// if what we want to search is in a particular subnote, it won't find that. So this is not an easy solution --
+				// I won't just be able to trim subpanels outo f the search to speed it up.
 
-
-
+				// September 16 2013 - trying to optimize speed of the Fact finding by holding a reference array
+				ArrayList notes_tmp = new ArrayList();
+				//NewMessage.Show ("1");
 				// THIS REQUIRES parsing each FILE
 				// getting hashtable full of facts
 				foreach (string notetoopen in ListOfParsePages)
@@ -256,7 +264,7 @@ namespace MefAddIns
 					// now do the actual parse on each of these pages 
 					// opening them and inspecting them
 					//NewMessage.Show ("Looking for " + notetoopen);
-					NoteDataInterface note = LayoutDetails.Instance.CurrentLayout.FindNoteByName(notetoopen);
+					NoteDataInterface note = LayoutDetails.Instance.CurrentLayout.FindNoteByName(notetoopen, ref notes_tmp);
 					//LayoutDetails.Instance.CurrentLayout.FindNoteByName(notetoopen);	
 					//DrawingTest.NotePanel panel = ((mdi)_CORE_GetActiveChild()).page_Visual.GetPanelByName(notetoopen);
 					if (note != null)		
@@ -265,15 +273,25 @@ namespace MefAddIns
 					//	NewMessage.Show ("Examining " + note.Caption);
 						// june 2013 - moving code from LayoutDetails into here to search subpanels
 						// if a panel is specified then we open each note on that panel?
-						if (note.ListOfSubnotes() != null)
+						List<NoteDataInterface> subpages = note.ListOfSubnotesAsNotes();
+						if (subpages != null)
 						{
+							subpages.Sort ();
+							foreach (NoteDataInterface subnote in subpages)
+							{
+								HandleFaceForNote (subnote, ref TheFacts, SearchMode, SearchTerm);
+							}
+							/*September 16 2013- Major revision attempt 2-- just push an actual list of notes here
+							// September 16 2013 - trying to optimize speed of the Fact finding by holding a reference array
+							ArrayList notes_tmp_subnotes = new ArrayList();
+
 							// may 27 2013 - also need to sort subpages coming from a panel
 							
-							List<string> subpages = note.ListOfSubnotes();
+
 							subpages.Sort ();
 							foreach (string s in subpages)
 							{
-								NoteDataInterface subnote = LayoutDetails.Instance.CurrentLayout.FindNoteByName(s);	
+								NoteDataInterface subnote = LayoutDetails.Instance.CurrentLayout.FindNoteByName(s, ref notes_tmp_subnotes);	
 								//	subnote = LayoutDetails.Instance.CurrentLayout.GoToNote(subnote);
 								if (null != subnote)
 								{
@@ -281,6 +299,7 @@ namespace MefAddIns
 									HandleFaceForNote (subnote, ref TheFacts, SearchMode, SearchTerm);
 								}
 							}
+							*/
 						}
 						else
 						{
