@@ -541,9 +541,20 @@ namespace YourOtherMind
 			List<TreeItem> items = new List<TreeItem> ();
 
 
+
+			//For [ ] text
 			System.Text.RegularExpressions.MatchCollection matches = regex.Matches (RichText.GetRichTextBox().Text, 0);
 			foreach (System.Text.RegularExpressions.Match match in matches) {
-				items.Add (new TreeItem(match.Value, 0,match.Index));
+				string value = match.Value;
+				if (value.IndexOf("~var") > -1)
+				{
+					// December 2013
+					// we don't show variable text.
+				}
+				else
+				{
+					items.Add (new TreeItem(match.Value, 0,match.Index));
+				}
 			}
 
 			 matches = Mainheading.Matches (RichText.GetRichTextBox().Text, 0);
