@@ -65,9 +65,12 @@ namespace MefAddIns
 		}
 		public string Version
 		{
+
+			// 1.1.0.0 - putting in hooks to support Fact Notes parsing "facts" on notes on OTHER layouts (Major)
+			// 1.0.4 - detect no space after a period
 			// 1.0.3 - holding a reference list when doing Fact List to speed it up
 			// 1.0.2 - able to "search" within SubPanels, not just Groups on Storyboards
-			get { return @"1.0.3.0"; }
+			get { return @"1.1.1.0"; }
 		}
 		public string Description
 		{
@@ -138,23 +141,33 @@ namespace MefAddIns
 		/// </summary>
 		/// <param name="sLine"></param>
 		/// <returns></returns>
-		public ArrayList GetListOfPages(string sLine, ref bool bGetWords)
+		public static ArrayList GetListOfPages(string sLine, ref bool bGetWords, LayoutPanelBase usedLayout)
 		{
-			return LayoutDetails.Instance.GetCurrentMarkup().GetListOfPages(sLine, ref bGetWords);
-	
+			//NewMessage.Show (LayoutDetails.Instance.GetCurrentMarkup().ToString ());
+			return LayoutDetails.Instance.GetCurrentMarkup().GetListOfPages(sLine, ref bGetWords, usedLayout);
+		
+
 		}
 
 		static void HandleFaceForNote (NoteDataInterface note, ref Hashtable TheFacts, bool SearchMode, string SearchTerm)
 		{
-			RichTextBox tempBox = new RichTextBox ();
-			tempBox.Rtf = note.Data1;
-			if (SearchMode == true) {
-				FactListMaker.GetSearchItems (tempBox.Text, TheFacts, note.GuidForNote + FactListMaker.SEP_INSIDEPHRASE + note.Caption, SearchTerm);
+			try {
+				RichTextBox tempBox = new RichTextBox ();
+				tempBox.Rtf = note.Data1;
+				//NewMessage.Show (tempBox.Rtf);
+				if (SearchMode == true) {
+					FactListMaker.GetSearchItems (tempBox.Text, TheFacts, note.GuidForNote + FactListMaker.SEP_INSIDEPHRASE + note.Caption, SearchTerm);
+				} else {
+					FactListMaker.GetFacts (tempBox.Text, TheFacts, note.GuidForNote + FactListMaker.SEP_INSIDEPHRASE + note.Caption);
+				}
+
+			//	NewMessage.Show (TheFacts.Count.ToString());
+
+				tempBox.Dispose ();
+			} catch (System.Exception ex) {
+				NewMessage.Show (ex.ToString ());
 			}
-			else {
-				FactListMaker.GetFacts (tempBox.Text, TheFacts, note.GuidForNote + FactListMaker.SEP_INSIDEPHRASE + note.Caption);
-			}
-			tempBox.Dispose();
+
 			//return TheFacts;
 		}
 
@@ -165,14 +178,18 @@ namespace MefAddIns
 		/// [[]] third, final line, tells which notes from which storyboard to parse, just like sendaway
 		/// </summary>
 		/// <returns></returns>
-		private Hashtable CreateFactList(ref string DestinationStoryBoard, ref bool groupByGroup)
+		private static Hashtable CreateFactList(ref string DestinationStoryBoard, ref bool groupByGroup, LayoutPanelBase LayoutToUse, string[] LinesOfText)
 		{
+			//NewMessage.Show ("In YOM Markup");
+			/*
+			 * 28/06/2014 - generalizing so this can be used on other layouts than the Current
+			 * */
 
 			ArrayList ListOfParsePages = new ArrayList();
-			if (LayoutDetails.Instance.CurrentLayout != null && LayoutDetails.Instance.CurrentLayout.CurrentTextNote != null)
+			if (LayoutToUse != null /* && LayoutDetails.Instance.CurrentLayout.CurrentTextNote != null*/)
 			{
 				//string sText = ((mdi)_CORE_GetActiveChild()).richText.Text; (dec20 2009 - this did not seem to be used)
-				string[] LinesOfText = LayoutDetails.Instance.CurrentLayout.CurrentTextNote.Lines();
+
 				
 				bool SearchMode = false; // if true we will actually search for all occurences of teh string
 				string SearchTerm = ""; // if doing a search the word we want to search for
@@ -226,9 +243,23 @@ namespace MefAddIns
 								if (sLine.IndexOf("[[Group") > -1)
 							{
 								bool words = false; // not needed for this but required for function
-								ArrayList tmp  = GetListOfPages(sLine, ref words);
-								ListOfParsePages.AddRange(tmp);
-								ListOfParsePages.Sort();
+								ArrayList tmp  = GetListOfPages(sLine, ref words, LayoutToUse);
+
+//								if (ListOfParsePages.Count == 0)
+//								{
+//									NewMe
+//								}
+//								else
+								if (tmp == null || tmp.Count == 0)
+								{
+									//NewMessage.Show (Loc.Instance.GetString("No pages found while looking for : " + sLine));
+									//NewMessage.Show (Loc.Instance.GetString("Layout looking for was called : " + LayoutToUse.Caption + " and it has this many notes = " + LayoutToUse.CountNotes()));
+								}
+								else
+								{
+									ListOfParsePages.AddRange(tmp);
+									ListOfParsePages.Sort();
+								}
 								
 								
 							}
@@ -241,8 +272,9 @@ namespace MefAddIns
 						}
 					}
 				}
-				catch (Exception)
+				catch (Exception ex)
 				{
+					NewMessage.Show (ex.ToString());
 				}
 				
 				Hashtable TheFacts = new Hashtable();
@@ -264,7 +296,8 @@ namespace MefAddIns
 					// now do the actual parse on each of these pages 
 					// opening them and inspecting them
 					//NewMessage.Show ("Looking for " + notetoopen);
-					NoteDataInterface note = LayoutDetails.Instance.CurrentLayout.FindNoteByName(notetoopen, ref notes_tmp);
+					//NewMessage.Show ("looking for " + notetoopen);
+					NoteDataInterface note = LayoutToUse.FindNoteByName(notetoopen, ref notes_tmp);
 					//LayoutDetails.Instance.CurrentLayout.FindNoteByName(notetoopen);	
 					//DrawingTest.NotePanel panel = ((mdi)_CORE_GetActiveChild()).page_Visual.GetPanelByName(notetoopen);
 					if (note != null)		
@@ -303,26 +336,52 @@ namespace MefAddIns
 						}
 						else
 						{
+						//	NewMessage.Show ("handled");
 						// need to use RichText box because we want plaintext version of text
 							//RichTextBox tempBox;
 							HandleFaceForNote (note, ref TheFacts, SearchMode, SearchTerm);
 						}
 						//tempBox.Dispose();
+					} // null
+					else
+					{
+						NewMessage.Show ("Note was null for " + notetoopen);
 					}
 				}
 				
 				
-				
+			//	NewMessage.Show("Facts count = " + TheFacts.Count.ToString());
 				return TheFacts;
-				
+
 			}
 			return null;
 		}
+
+		/// <summary>
+		/// Gets the facts on remote note.
+		/// 
+		/// Intended to be called remotely.
+		/// </summary>
+		/// <returns>
+		/// The facts on remote note.
+		/// </returns>
+		public static Hashtable GetFactsOnRemoteNote (LayoutPanelBase layout, string[] code)
+		{
+			//NewMessage.Show ("Hello there");
+
+			bool groupByGroup = true;
+			string DestinationStoryBoard = "";
+			Hashtable Facts = CreateFactList(ref DestinationStoryBoard, ref groupByGroup, layout, code);
+			//NewMessage.Show ("Fact count is " + Facts.Count.ToString());
+			return Facts;
+		}
+
 		private void ParseFacts()
 		{
 			bool groupByGroup = true;
 			string DestinationStoryBoard = "";
-			Hashtable Facts = CreateFactList(ref DestinationStoryBoard, ref groupByGroup);
+			string[] LinesOfText = LayoutDetails.Instance.CurrentLayout.CurrentTextNote.Lines();
+			Hashtable Facts = CreateFactList(ref DestinationStoryBoard, ref groupByGroup, LayoutDetails.Instance.CurrentLayout, LinesOfText);
 			if (null == Facts)
 			{
 				return;
@@ -364,15 +423,25 @@ namespace MefAddIns
 								
 								foreach (string s in factsforentry)
 								{
+
+									FactRecord factRecord = FactRecord.CreateFactRecord(s, false);
 									// now we should have strings of format TItle;GUID
-									string[] titleandguid = s.Split(new string[1] { FactListMaker.SEP_INSIDEPHRASE }, StringSplitOptions.None);
+								//	string[] titleandguid = s.Split(new string[1] { FactListMaker.SEP_INSIDEPHRASE }, StringSplitOptions.None);
 									
-									
-									if (titleandguid != null && titleandguid.Length == 4)
+								//	fish|07|;Where in hell did she go?
+								//		What|;5fee548d-2a2f-4f37-b912-01833f7ca198|;Chapter 2
+
+
+									// 0 = position??
+									// 1 = text near it
+									// 2 = guid of note found
+									// 3 = chapter
+									if (factRecord != null)
+									//if (titleandguid != null && titleandguid.Length == 4)
 									{
-										string sNum = titleandguid[0];
-										string sItemToAdd = titleandguid[1];
-										string sChapter = titleandguid[3];
+										string sNum = factRecord.position;//titleandguid[0];
+										string sItemToAdd = factRecord.text;//titleandguid[1];
+										string sChapter = factRecord.chapter;//titleandguid[3];
 										string group = "";
 										if (true == groupByGroup)
 										{
@@ -388,7 +457,7 @@ namespace MefAddIns
 										}
 										sItemToAdd = sItemToAdd.Trim();
 										
-										Storyboard.AddRecordDirectly(sItemToAdd, titleandguid[2], group);
+										Storyboard.AddRecordDirectly(sItemToAdd, factRecord.noteguid, group);
 									}
 									
 								}

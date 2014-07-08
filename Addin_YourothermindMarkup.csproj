@@ -50,6 +50,7 @@
     <Compile Include="iMarkupYourOtherMind.cs" />
     <Compile Include="YomParse.cs" />
     <Compile Include="FactListMaker.cs" />
+    <Compile Include="FactRecord.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System.ComponentModel.Composition" />

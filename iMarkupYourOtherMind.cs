@@ -182,6 +182,83 @@ namespace YourOtherMind
 		{
 			return Math.Max (10, (int)(Math.Round (zoomFactor / 2) * 10));
 		}
+		void PaintNoSpaceAfterPeriod (PaintEventArgs e, int Start, int End, RichTextBox RichText)
+		{
+			Graphics g;
+			
+			g = RichText.CreateGraphics ();
+			//Pen myPen = null;// new Pen (Color.FromArgb (60, Color.Yellow)); // Alpha did not seem to work this way
+			
+			
+			// this gets tricky. The loop is just to find all the [[~scenes]] on the note
+			// even if offscreen.
+			// OK: but with th eoptimization to only show on screen stuff, do we need this anymore???
+			// august 10 - settting it back
+			
+			
+			// now trying regex
+			System.Text.RegularExpressions.Regex regex = 
+				new System.Text.RegularExpressions.Regex ("\\.\\w|\\.  \\w|\\?\\w|\\?  \\w|\\!\\w|\\!  \\w|\\;\\w|\\;  \\w|\\:\\w|\\:  \\w|\\,\\w|\\,  \\w",
+			                                                                                       System.Text.RegularExpressions.RegexOptions.IgnoreCase | RegexOptions.Compiled|
+			                                                                                       System.Text.RegularExpressions.RegexOptions.Multiline);
+			System.Text.RegularExpressions.MatchCollection matches = regex.Matches (RichText.Text, Start);
+			
+			foreach (System.Text.RegularExpressions.Match match in matches) {
+				if (match.Index > End)
+					break; // we exit if already at end
+				
+				Point pos = RichText.GetPositionFromCharIndex (match.Index);
+				
+				if (pos.X > -1 && pos.Y > -1) {
+					
+					
+					int testpos = match.Index + 2;
+					
+					
+					
+					
+					Color colorToUse = Color.FromArgb(175, Color.Red);
+					
+					// default is [[facts]] and stuff
+					//	pos = CoreUtilities.General.BuildLocationForOverlayText (pos, DockStyle.Bottom, "  ");
+					//	System.Drawing.SolidBrush brush1 = new System.Drawing.SolidBrush( colorToUse);
+					System.Drawing.Pen pen1 = new Pen(colorToUse);
+					//myPen.Width = 1;
+					//myPen.Color = Color.Red;
+					//		int scaler = BuildScaler(RichText.ZoomFactor);
+					
+					Rectangle rec = GetRectangleForSmallRectangle(g, pos, RichText, match.Index, match.Value, true);// new Rectangle (new Point (pos.X+(int)(scaler*1.5), pos.Y -(5+scaler)), new Size ((int)(scaler * 1.5), (int)(scaler * 1.5)));
+					
+					
+					//Rectangle rec = new Rectangle (new Point (pos.X+scaler, pos.Y-15), new Size ((int)(scaler * 1.5), (int)(scaler * 0.75)));
+					//	Rectangle rec2 = new Rectangle (new Point (pos.X+20, pos.Y - 25), new Size ((int)(scaler * 1), (int)(scaler * 0.65)));
+					//g.DrawLine(myPen, pos.X, pos.Y -10, pos.X + 50, pos.Y-10);
+					//g.FillRectangle (brush1, rec);
+					//g.FillEllipse(brush1, rec);
+					rec.Height = 1;
+					
+					g.DrawRectangle(pen1, rec);
+					//	g.FillEllipse(brush1, rec2);
+					
+					
+				}
+				
+				
+				/*
+                            locationInText = locationInText + sParam.Length;
+
+                            if (locationInText > end)
+                            {
+                                // don't search past visible end
+                                pos = emptyPoint;
+                            }
+                            else
+                                pos = GetPositionForFoundText(sParam, ref locationInText);*/
+			}
+			// regex matches
+			g.Dispose ();
+			//myPen.Dispose ();
+		}
 
 		void PaintDoubleSpaces (PaintEventArgs e, int Start, int End, RichTextBox RichText)
 		{
@@ -259,6 +336,31 @@ namespace YourOtherMind
 			g.Dispose ();
 			//myPen.Dispose ();
 		}
+		/// <summary>
+		/// Gets the main headings.
+		/// 
+		/// Used for TabNavigation
+		/// </summary>
+		/// <returns>
+		/// The main headings.
+		/// </returns>
+		/// <param name='box'>
+		/// Box.
+		/// </param>
+		public List<string> GetMainHeadings (RichTextBox box)
+		{
+			System.Text.RegularExpressions.Regex Mainheading = new System.Text.RegularExpressions.Regex ("^=[^=]+=$",
+			                                                                                             RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.Compiled | System.Text.RegularExpressions.RegexOptions.Multiline);
+
+			MatchCollection matches = Mainheading.Matches (box.Text, 0);
+
+			List<string> result = new List<string>();
+			foreach (System.Text.RegularExpressions.Match match in matches) {
+				result.Add (match.Value);
+			}
+
+			return result;
+		}
 
 		void PaintHeadings (PaintEventArgs e, int Start, int End, RichTextBox RichText, System.Text.RegularExpressions.Regex regex2, Color color, string text, Font f)
 		{
@@ -307,6 +409,7 @@ namespace YourOtherMind
 		{
 			try {
 				PaintDoubleSpaces(e, Start, End, RichText);
+				PaintNoSpaceAfterPeriod(e, Start, End, RichText);
 				PaintLink(e, Start, End, RichText);
 
 				bool doheadings = true;
@@ -492,9 +595,9 @@ namespace YourOtherMind
 
 			return new Rectangle(newPos, newSize);
 		}
-		public ArrayList GetListOfPages(string sLine, ref bool bGetWords)
+		public ArrayList GetListOfPages(string sLine, ref bool bGetWords, LayoutPanelBase usedLayout)
 		{
-
+			//NewMessage.Show ("YOM GetListOfPages for line = " + sLine);
 			ArrayList ListOfParsePages = new ArrayList();
 			string[] items = sLine.Split(',');
 			if (items != null)
@@ -505,7 +608,7 @@ namespace YourOtherMind
 				{
 					bGetWords = true;
 				}
-				ListOfParsePages.AddRange(LayoutDetails.Instance.CurrentLayout.GetListOfGroupEmNameMatching(sStoryboardName, sGroupMatch));
+				ListOfParsePages.AddRange(usedLayout.GetListOfGroupEmNameMatching(sStoryboardName, sGroupMatch));
 				
 				//NewMessage.Show(sStoryboardName + " " + sGroupMatch);
 			}
